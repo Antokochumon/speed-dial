@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #000; color: white; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; flex-grow: 1; }
+        .slot { position: relative; background: #111; border-radius: 20px; border: 2px solid #222; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+        .btn { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 18px; border: 3px solid rgba(255,255,255,0.1); }
+        .btn:active { transform: scale(0.9); }
+        .num { font-size: 50px; font-weight: 900; }
+        .name { font-size: 10px; text-transform: uppercase; opacity: 0.7; }
+        .modal { background: rgba(0,0,0,0.9); position: fixed; inset: 0; display: none; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <header class="p-4 flex justify-between items-center bg-zinc-900">
+        <h1 class="font-bold italic text-blue-500">AUTO DIAL</h1>
+        <button onclick="openM()" class="bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold">+ ADD</button>
+    </header>
+
+    <div id="pad" class="grid"></div>
+
+    <div id="m" class="modal">
+        <div class="bg-zinc-900 p-6 rounded-3xl w-full space-y-4 border border-zinc-700">
+            <input type="text" id="ni" placeholder="Name" class="w-full bg-zinc-800 p-3 rounded-xl outline-none">
+            <input type="tel" id="pi" placeholder="Phone Number" class="w-full bg-zinc-800 p-3 rounded-xl outline-none">
+            <input type="color" id="ci" value="#3b82f6" class="w-full h-10 rounded-lg bg-transparent">
+            <div class="flex gap-2">
+                <button onclick="closeM()" class="flex-1 bg-zinc-800 p-3 rounded-xl">Back</button>
+                <button onclick="save()" class="flex-1 bg-blue-600 p-3 rounded-xl font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('dial_db')) || {};
+        
+        function call(p) {
+            if (window.AppInventor) window.AppInventor.setWebViewString(p);
+            else alert("Calling: " + p);
+        }
+
+        function render() {
+            const pad = document.getElementById('pad');
+            pad.innerHTML = '';
+            for(let i=1; i<=15; i++) {
+                const s = document.createElement('div');
+                s.className = 'slot';
+                if(db[i]) {
+                    s.innerHTML = `<div onclick="call('${db[i].p}')" class="btn" style="background:${db[i].c}">
+                        <div class="num">${i}</div>
+                        <div class="name">${db[i].n}</div>
+                    </div><div onclick="del(${i})" style="position:absolute;top:0;right:0;padding:5px;color:red">X</div>`;
+                } else {
+                    s.innerHTML = `<div class="opacity-10 text-2xl">${i}</div>`;
+                }
+                pad.appendChild(s);
+            }
+        }
+
+        function save() {
+            const n = document.getElementById('ni').value, p = document.getElementById('pi').value, c = document.getElementById('ci').value;
+            if(!p) return;
+            const slot = Object.keys(db).length + 1;
+            db[slot > 15 ? 15 : slot] = {n, p, c};
+            localStorage.setItem('dial_db', JSON.stringify(db));
+            closeM(); render();
+        }
+
+        function del(i) { delete db[i]; localStorage.setItem('dial_db', JSON.stringify(db)); render(); }
+        function openM() { document.getElementById('m').style.display = 'flex'; }
+        function closeM() { document.getElementById('m').style.display = 'none'; }
+        window.onload = render;
+    </script>
+</body>
+</html>
